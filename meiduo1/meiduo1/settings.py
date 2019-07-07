@@ -25,7 +25,7 @@ SECRET_KEY = '(gba-^kp$**0eylo#gt2nlifzvag+fk2ko1sbb_^%ecg+iddj#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.meiduo.site','127.0.0.1']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.users'
 ]
 
 MIDDLEWARE = [
@@ -143,7 +144,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 
 
@@ -171,7 +172,7 @@ LOGGING = {
             'formatter': 'simple'
         },
         'file': {  # 向文件中输出日志
-            'level': 'INFO',
+            'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/meiduo.log'),  # 日志文件的位置
             'maxBytes': 300 * 1024 * 1024,
@@ -181,9 +182,15 @@ LOGGING = {
     },
     'loggers': {  # 日志器
         'django': {  # 定义了一个名为django的日志器
-            'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
+            'handlers': ['file'],  # 可以同时向终端与文件中输出日志
+            # 'handlers': ['console', 'file'],
             'propagate': True,  # 是否继续传递日志信息
             'level': 'INFO',  # 日志器接收的最低日志级别
         },
     }
 }
+
+
+
+
+AUTH_USER_MODEL = 'users.User'
