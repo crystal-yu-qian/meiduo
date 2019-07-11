@@ -58,7 +58,7 @@ TEMPLATES = [
         'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
-            'environment': 'utils.jinja2_env.jinja2_environment',
+            'environment': 'untils.jinja2_evn.jinja2_environment',
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
@@ -97,6 +97,13 @@ CACHES = {
     "session": { # session
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "code": { # session
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -182,8 +189,8 @@ LOGGING = {
     },
     'loggers': {  # 日志器
         'django': {  # 定义了一个名为django的日志器
-            'handlers': ['file'],  # 可以同时向终端与文件中输出日志
-            # 'handlers': ['console', 'file'],
+            # 'handlers': ['console', 'file'],  # 可以同时向终端与文件中输出日志
+            'handlers': ['file'],
             'propagate': True,  # 是否继续传递日志信息
             'level': 'INFO',  # 日志器接收的最低日志级别
         },

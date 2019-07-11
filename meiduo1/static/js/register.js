@@ -76,6 +76,18 @@ var vm = new Vue({
             } else {
                 this.error_password = true;
             }
+            var url = 'http://www.meiduo.site:8000/usernames/'+ this.username +'/count/'
+            axios.get(url).then(response => {
+                   // alert('ok')
+                    if (response.data.count==1){
+                        this.error_name=true
+                        this.error_name_message='用户名重复了'
+                    }else {
+                        this.error_name=false
+                    }
+            }).catch(error => {
+                    // alert('error')
+            })
         },
         // 确认密码
         check_password2: function () {
