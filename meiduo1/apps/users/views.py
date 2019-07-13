@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render,redirect
 
 # Create your views here.
@@ -8,7 +9,8 @@ from django.http import HttpResponse
 from apps.users.models import User
 
 from django.urls import reverse
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
+
 
 class RegisterView(View):
     def get(self,request):
@@ -70,6 +72,19 @@ class LoginView(View):
         if next:
             responce = redirect(next)
         else:
-            return redirect(reverse('contents:index'))
+            responce = redirect(reverse('contents:index'))
         responce.set_cookie('username',user.username)
         return responce
+
+
+class LogoutView(View):
+    def get(self,request):
+        logout(request)
+        responce = redirect(reverse('contents:index'))
+        responce.delete_cookie('username')
+        return responce
+
+class UserInfoView(LoginRequiredMixin,View):
+    login_url = '/login/'
+    def get(self,request):
+        return render(request,'user_center_info.html')

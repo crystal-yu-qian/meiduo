@@ -25,7 +25,7 @@
 				<div class="form_con">
 					<div class="form_input cur">
 						<form method="post" class="login">
-                            {{ scrf_input }}
+                            {{ csrf_input }}
 							<input type="text" v-model="username" @blur="check_username" name="username" class="name_input" placeholder="请输入用户">
 							<div class="user_error" v-show="error_username">[[error_username_message]]</div>
                             <input type="password" v-model="password" @blur="check_pwd" name="pwd" class="pass_input" placeholder="请输入密码">
