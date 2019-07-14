@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.users'
+
+    'apps.users',
+    'apps.oauth',
 ]
 
 MIDDLEWARE = [
@@ -203,3 +205,8 @@ LOGGING = {
 AUTH_USER_MODEL = 'users.User'
 
 AUTHENTICATION_BACKENDS = ['apps.users.utils.UsernameMobileModelBackend']
+
+
+QQ_CLIENT_ID = '101518219'
+QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'
