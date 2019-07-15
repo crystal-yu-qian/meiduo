@@ -87,4 +87,42 @@ class LogoutView(View):
 class UserInfoView(LoginRequiredMixin,View):
     login_url = '/login/'
     def get(self,request):
-        return render(request,'user_center_info.html')
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+        return render(request,'user_center_info.html',context=context)
+
+import json
+from untils.response_code import RETCODE
+# from django.core.mail import send_mail
+# from meiduo1 import settings
+
+class EmailView(View):
+    def put(self,request):
+        user = request.user
+        body = request.body
+        data = json.loads(body.decode())
+        email = data.get('email')
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$',email):
+            return http.JsonResponse({'code':RETCODE.PARAMERR,"errmsg":'邮箱格式不正确'})
+        try:
+            user.email = email
+            user.save()
+        except Exception as e:
+            return http.JsonResponse({'code':RETCODE.DBERR,'errmsg':'保存失败'})
+
+        # subject = '美多商场激活邮件'
+        # message = '成功'
+        # from_email = settings.EMAIL_FROM
+        # recipient_list = [email]
+        # html_message = '<a href="#">点击激活</a>'
+        # send_mail(subject, message, from_email, recipient_list,html_message=html_message)
+        from celery_tasks.email.tasks import send_active_email
+        send_active_email.delay(email, request.user.id)
+
+        return http.JsonResponse({'code':RETCODE.OK})
+
+# celery -A celery_tasks.main worker -l info
