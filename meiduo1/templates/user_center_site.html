@@ -9,6 +9,10 @@
     <script type="text/javascript" src="../static/js/host.js"></script>
     <script type="text/javascript" src="../static/js/vue-2.5.16.js"></script>
     <script type="text/javascript" src="../static/js/axios-0.18.0.min.js"></script>
+    <script type="text/javascript">
+        var addresses = {{ addresses|safe }}
+        var default_address_id ='{{ default_address_id }}'
+    </script>
 </head>
 <body>
 <div id="app" v-cloak>
@@ -16,17 +20,17 @@
         <div class="header">
             <div class="welcome fl">欢迎来到美多商城!</div>
             <div class="fr">
-                <div class="login_info fl">
-                    欢迎您：<em>张 山</em>
+                <div v-if="username" class="login_info fl">
+                    欢迎您：<em>[[ username ]]</em>
                 </div>
-                <div class="login_btn fl">
-                    <a href="{{url('users:login')}}">登录</a>
+                <div  v-else class="login_btn fl">
+                    <a href="{{ url('users:login') }}">登录</a>
                     <span>|</span>
-                    <a href="{{url('users:register')}}">注册</a>
+                    <a href="{{ url('users:register') }}">注册</a>
                 </div>
                 <div class="user_link fl">
                     <span>|</span>
-                    <a href="{{url('users:center')}}">用户中心</a>
+                    <a href="{{ url('users:center') }}">用户中心</a>
                     <span>|</span>
                     <a href="../static/cart.html">我的购物车</a>
                     <span>|</span>
@@ -56,38 +60,38 @@
         <div class="left_menu_con clearfix">
             <h3>用户中心</h3>
             <ul>
-                <li><a href="{{url('users:center')}}">· 个人信息</a></li>
+                <li><a href="{{ url('users:center') }}">· 个人信息</a></li>
                 <li><a href="../static/user_center_order.html">· 全部订单</a></li>
-                <li><a href="{{url('areas:address')}}" class="active">· 收货地址</a></li>
+                <li><a href="{{ url('areas:address') }}" class="active">· 收货地址</a></li>
                 <li><a href="../static/user_center_pass.html">· 修改密码</a></li>
             </ul>
         </div>
         <div class="right_content clearfix" v-cloak>
-    <div class="site_top_con">
-        <a @click="show_add_site">新增收货地址</a>
-        <span>你已创建了<b>[[ addresses.length ]]</b>个收货地址，最多可创建<b>20</b>个</span>
-    </div>
-    <div class="site_con" v-for="(address, index) in addresses">
-        <div class="site_title">
-            <h3>[[ address.title ]]</h3>
-            <a href="javascript:;" class="edit_icon"></a>
-            <em v-if="address.id===default_address_id">默认地址</em>
-            <span class="del_site">×</span>
+            <div class="site_top_con">
+                <a @click="show_add_site">新增收货地址</a>
+                <span>你已创建了<b>[[ addresses.length ]]</b>个收货地址，最多可创建<b>20</b>个</span>
+            </div>
+            <div class="site_con" v-for="(address, index) in addresses">
+                <div class="site_title">
+                    <h3>[[ address.title ]]</h3>
+                    <a href="javascript:;" class="edit_icon"></a>
+                    <em v-if="address.id===default_address_id">默认地址</em>
+                    <span  @click="delete_address(index)" class="del_site">×</span>
+                </div>
+                <ul class="site_list">
+                    <li><span>收货人：</span><b>[[ address.receiver ]]</b></li>
+                    <li><span>所在地区：</span><b>[[ address.province ]] [[address.city]] [[ address.district ]]</b></li>
+                    <li><span>地址：</span><b>[[ address.place ]]</b></li>
+                    <li><span>手机：</span><b>[[ address.mobile ]]</b></li>
+                    <li><span>固定电话：</span><b>[[ address.tel ]]</b></li>
+                    <li><span>电子邮箱：</span><b>[[ address.email ]]</b></li>
+                </ul>
+                <div class="down_btn">
+                    <a v-if="address.id!=default_address_id">设为默认</a>
+                    <a href="javascript:;" @click="show_edit_site(index)" class="edit_icon">编辑</a>
+                </div>
+            </div>
         </div>
-        <ul class="site_list">
-            <li><span>收货人：</span><b>[[ address.receiver ]]</b></li>
-            <li><span>所在地区：</span><b>[[ address.province ]] [[address.city]] [[ address.district ]]</b></li>
-            <li><span>地址：</span><b>[[ address.place ]]</b></li>
-            <li><span>手机：</span><b>[[ address.mobile ]]</b></li>
-            <li><span>固定电话：</span><b>[[ address.tel ]]</b></li>
-            <li><span>电子邮箱：</span><b>[[ address.email ]]</b></li>
-        </ul>
-        <div class="down_btn">
-            <a v-if="address.id!=default_address_id">设为默认</a>
-            <a href="javascript:;" class="edit_icon">编辑</a>
-        </div>
-    </div>
-</div>
     </div>
     <div class="footer">
         <div class="foot_link">
@@ -104,7 +108,7 @@
     </div>
 
     <div class="pop_con" v-show="is_show_edit" v-cloak>
-    <div class="site_con site_pop">
+        <div class="site_con site_pop">
             <div class="site_pop_title">
                 <h3 v-if="editing_address_index">编辑收货地址</h3>
                 <h3 v-else>新增收货地址</h3>
@@ -151,8 +155,8 @@
                 <input @click="save_address" type="button" name="" value="新 增" class="info_submit">
                 <input @click="is_show_edit=false" type="reset" name="" value="取 消" class="info_submit info_reset">
             </form>
+        </div>
     </div>
-</div>
 
     <div class="pop_con2">
         <div class="confirm_pop">

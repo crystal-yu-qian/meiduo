@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'^emails/$',views.EmailView.as_view(),name='email'),
     url(r'^email_active/$',views.EmailActiveView.as_view(),name='email_active'),
 
-    url(r'^addresses/create/$', views.CreateAddressViw.as_view(), name='create_address'),
+    url(r'^addresses/create/$',views.CreateAddressViw.as_view(), name='create_address'),
+    url(r'^addresses/(?P<address_id>\d+)/$',views.UpdateAdressView.as_view(),name='update_address'),
 ]
     
