@@ -126,3 +126,21 @@ class EmailView(View):
         return http.JsonResponse({'code':RETCODE.OK})
 
 # celery -A celery_tasks.main worker -l info
+
+from apps.users.utils import check_verify_token
+
+class EmailActiveView(View):
+    def get(self,request):
+        token = request.GET.get("token")
+        if token is None:
+            return http.HttpResponseBadRequest('缺少参数')
+        user_id = check_verify_token(token)
+        if user_id is None:
+            return http.HttpResponseBadRequest('参数错误')
+        try:
+            user = User.objects.get(id= user_id)
+        except User.DoesNotExist:
+            return http.HttpResponseBadRequest('没有此用户')
+        user.email_active = True
+        user.save()
+        return redirect(reverse('users:center'))

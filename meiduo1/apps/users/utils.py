@@ -27,5 +27,15 @@ from meiduo1 import settings
 
 def generate_verify_email_url(user_id):
     s = Serializer(settings.SECRET_KEY, expires_in=3600)
-    token = s.dumps({'openid': user_id})
+    token = s.dumps({'user_id': user_id})
     return 'http://www.meiduo.site:8000/email_active/?token=%s' % token.decode()
+
+from itsdangerous import BadSignature,SignatureExpired
+def check_verify_token(token):
+    s = Serializer(settings.SECRET_KEY, expires_in=3600)
+    try:
+        result = s.loads(token)
+    except BadSignature:
+        return None
+    user_id = result.get("user_id")
+    return user_id

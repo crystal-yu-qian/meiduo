@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^login/$',views.LoginView.as_view(),name='login'),
     url(r'^logout/$',views.LogoutView.as_view(),name='logout'),
     url(r'^center/$', views.UserInfoView.as_view(), name='center'),
-    url(r'^emails/$',views.EmailView.as_view(),name='email')
+    url(r'^emails/$',views.EmailView.as_view(),name='email'),
+    url(r'^email_active/$',views.EmailActiveView.as_view(),name='email_active')
 ]
     
