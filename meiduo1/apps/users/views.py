@@ -270,3 +270,51 @@ class UpdateAdressView(View):
         except Address.DoesNotExist:
             return http.JsonResponse({'code':RETCODE.NODATAERR,'errmsg':'没有此记录'})
         return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+
+class DefaultAddressView(View):
+    def put(self,request,address_id):
+        try:
+            address = Address.objects.get(pk=address_id)
+            request.user.default_address = address
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code':RETCODE.NODATAERR,'errmsg':'设置地址失败'})
+        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+
+class UpdateTitleAddressView(View):
+    def put(self, request, address_id):
+        try:
+            json_dict = json.loads(request.body.decode())
+            title = json_dict.get('title')
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '设置标题失败'})
+        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+
+
+# class ChangePasswordView(View):
+#     def get(self, request):
+#         return render(request, 'user_center_pass.html')
+#     def post(self, request):
+#         old_password = request.POST.get('old_password')
+#         new_password = request.POST.get('new_password')
+#         new_password2 = request.POST.get('new_password2')
+#         if not all([old_password, new_password, new_password2]):
+#             return http.HttpResponseForbidden('缺少必传参数')
+#         if not re.match(r'^[0-9A-Za-z]{8,20}$', new_password):
+#             return http.HttpResponseBadRequest('密码最少8位，最长20位')
+#         if new_password != new_password2:
+#             return http.HttpResponseBadRequest('两次输入的密码不一致')
+#         if not request.user.check_password(old_password):
+#             return render(request, 'user_center_pass.html', {'origin_password_errmsg':'原始密码错误'})
+#         try:
+#             request.user.set_password(new_password)
+#             request.user.save()
+#         except Exception as e:
+#             logger.error(e)
+#             return render(request, 'user_center_pass.html', {'change_password_errmsg': '修改密码失败'})
+#         logout(request)
+#         response = redirect(reverse('users:login'))
+#         response.delete_cookie('username')
+#         return response
