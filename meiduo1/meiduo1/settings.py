@@ -225,3 +225,6 @@ EMAIL_HOST_PASSWORD = '022795yu'
 #收件人看到的发件人
 EMAIL_FROM = '美多商城<qian_ziyu@163.com>'
 
+
+
+DEFAULT_FILE_STORAGE = 'untils.fastdfs.storage.FastDFSStorage'
