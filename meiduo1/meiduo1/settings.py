@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'apps.oauth',
     'apps.areas',
     'apps.contents',
-    'apps.goods'
+    'apps.goods',
+    'haystack',
 ]
 
 MIDDLEWARE = [
@@ -228,3 +229,13 @@ EMAIL_FROM = '美多商城<qian_ziyu@163.com>'
 
 
 DEFAULT_FILE_STORAGE = 'untils.fastdfs.storage.FastDFSStorage'
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.17.76:9200/',
+        'INDEX_NAME': 'meiduo',
+    },
+}
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
