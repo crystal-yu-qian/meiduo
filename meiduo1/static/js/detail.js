@@ -132,8 +132,8 @@ var vm = new Vue({
         // 记录商品详情的访问量
         detail_visit(){
             if (this.category_id) {
-                var url = this.hots + '/detail/visit/' + this.category_id + '/';
-                axios.post(url, {}, {
+                var url = this.hots + '/detail/visit/';
+                axios.post(url, {'category_id':this.category_id }, {
                     headers: {
                         'X-CSRFToken': getCookie('csrftoken')
                     },
