@@ -6,6 +6,8 @@ from django.views import View
 import re
 from django import http
 from django.http import HttpResponse
+
+from apps.goods.models import SKU
 from apps.users.models import User, Address
 
 from django.urls import reverse
@@ -262,25 +264,28 @@ class UpdateAdressView(View):
             "tel": address.tel,
             "email": address.email}
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改地址成功', 'address': update_data})
-    def delete(self,request,address_id):
+
+    def delete(self, request, address_id):
         try:
             address = Address.objects.get(pk=address_id)
-            address.is_deleted=True
+            address.is_deleted = True
             address.save()
         except Address.DoesNotExist:
-            return http.JsonResponse({'code':RETCODE.NODATAERR,'errmsg':'没有此记录'})
-        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+            return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '没有此记录'})
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
+
 
 class DefaultAddressView(View):
-    def put(self,request,address_id):
+    def put(self, request, address_id):
         try:
             address = Address.objects.get(pk=address_id)
             request.user.default_address = address
             request.user.save()
         except Exception as e:
             logger.error(e)
-            return http.JsonResponse({'code':RETCODE.NODATAERR,'errmsg':'设置地址失败'})
-        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+            return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '设置地址失败'})
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
+
 
 class UpdateTitleAddressView(View):
     def put(self, request, address_id):
@@ -290,12 +295,13 @@ class UpdateTitleAddressView(View):
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '设置标题失败'})
-        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
 
 
 class ChangePasswordView(View):
     def get(self, request):
         return render(request, 'user_center_pass.html')
+
     def post(self, request):
         old_password = request.POST.get('old_password')
         new_password = request.POST.get('new_password')
@@ -307,7 +313,7 @@ class ChangePasswordView(View):
         if new_password != new_password2:
             return http.HttpResponseBadRequest('两次输入的密码不一致')
         if not request.user.check_password(old_password):
-            return render(request, 'user_center_pass.html', {'origin_password_errmsg':'原始密码错误'})
+            return render(request, 'user_center_pass.html', {'origin_password_errmsg': '原始密码错误'})
         try:
             request.user.set_password(new_password)
             request.user.save()
@@ -318,3 +324,35 @@ class ChangePasswordView(View):
         response = redirect(reverse('users:login'))
         response.delete_cookie('username')
         return response
+
+
+from django_redis import get_redis_connection
+
+
+class HistoryView(LoginRequiredMixin, View):
+    def post(self, request):
+        data = json.loads(request.body.decode())
+        sku_id = data.get('sku_id')
+        try:
+            SKU.objects.get(pk=sku_id)
+        except SKU.DoesNotExist:
+            return http.JsonResponse({'code': RETCODE.NODATAERR, "errmsg": "没有此类商品"})
+        redis_conn = get_redis_connection('history')
+        redis_conn.lrem('history:%s' % request.user.id, 0, sku_id)
+        redis_conn.lpush('history:%s' % request.user.id, sku_id)
+        redis_conn.ltrim('history:%s' % request.user.id, 0, 4)
+        return http.JsonResponse({'code': RETCODE.OK, 'erromsg': 'ok'})
+
+    def get(self, request):
+        conn = get_redis_connection('history')
+        ids = conn.lrange('history:%s' % request.user.id, 0, -1)
+        skus = []
+        for id in ids:
+            sku = SKU.objects.get(pk=id)
+            skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': sku.price,
+            })
+        return http.JsonResponse({'code': RETCODE.OK, 'erromsg': 'ok','skus':skus})

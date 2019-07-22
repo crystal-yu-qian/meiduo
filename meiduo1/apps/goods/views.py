@@ -142,3 +142,5 @@ class VisitView(View):
             gvc.count+=1
             gvc.save()
             return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+
+

@@ -15,6 +15,6 @@ urlpatterns = [
     url(r'^addresses/(?P<address_id>\d+)/default/$',views.DefaultAddressView.as_view(),name='default_address'),
     url(r'^addresses/(?P<address_id>\d+)/title/$',views.UpdateTitleAddressView.as_view(),name='update_title'),
     url(r'^password/$',views.ChangePasswordView.as_view(),name='change_pass'),
-
+    url(r'^browse_histories/$',views.HistoryView.as_view(),name='history'),
 ]
     
