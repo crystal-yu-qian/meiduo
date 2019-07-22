@@ -37,5 +37,6 @@ urlpatterns = [
     url(r'^', include('apps.areas.urls',namespace='areas')),
     url(r'^', include('apps.goods.urls',namespace='goods')),
     url(r'^search/', include('haystack.urls')),
+    url(r'^', include('apps.carts.urls',namespace='carts')),
 
 ]
