@@ -33,8 +33,13 @@ class CartsView(View):
 
         if user is not None and user.is_authenticated:
             redis_conn = get_redis_connection('carts')
-            redis_conn.hset('carts:%s' % user.id, sku_id, count)
-            redis_conn.sadd('selected:', sku_id)
+            pipeline = redis_conn.pipeline()
+            # redis_conn.hset('carts:%s' % user.id, sku_id, count)
+            # redis_conn.hincrby('carts:%s' % user.id, sku_id, count) #增加count个数
+            pipeline.hhincrby('carts:%s' % user.id, sku_id, count)
+            # redis_conn.sadd('selected:', sku_id)
+            pipeline.sadd('selected:', sku_id)
+            pipeline.execute() #pipeline 操作数据库
             return http.JsonResponse({'code': RETCODE.OK, 'errmsg': "ok"})
         else:
             carts_cookie = request.COOKIES.get('carts')
