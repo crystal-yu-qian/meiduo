@@ -69,8 +69,8 @@ class CartsView(View):
                     selected = True
                 else:
                     selected = False
-                carts[sku_id] = {
-                    'count': count,
+                carts[int(sku_id)] = {
+                    'count': int(count),
                     'selected': sku_id in selected_ids
                 }
         else:
@@ -154,4 +154,32 @@ class CartsView(View):
             }
             response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'cart_sku': new_sku})
             response.set_cookie('carts', en, max_age=3600)
+            return response
+
+
+
+    def delete(self,request):
+        data = json.loads(request.body.decode())
+        sku_id= data.get('sku_id')
+        try:
+            sku = SKU.objects.get(pk = sku_id)
+        except SKU.DoesNotExist:
+            return http.JsonResponse({'code':RETCODE.NODATAERR,'errmsg':'没有此数据'})
+        user = request.user
+        if user is not None and user.is_authenticated:
+            redis_conn = get_redis_connection('carts')
+            redis_conn.hdel('cart:%s'%user.id,sku_id)
+            redis_conn.srem('selected:%s'%user.id,sku_id)
+            return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+        else:
+            cart_cookie = request.COOKIES.get('carts')
+            if cart_cookie is not None:
+                carts = pickle.loads(base64.b64decode(cart_cookie))
+            else:
+                carts = {}
+            if sku_id in carts:
+                del carts[sku_id]
+            en = base64.b64encode(pickle.dumps(carts))
+            response = http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok'})
+            response.set_cookie('carts',en,max_age=3600)
             return response
