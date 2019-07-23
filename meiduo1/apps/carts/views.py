@@ -26,7 +26,7 @@ class CartsView(View):
         except SKU.DoesNotExist:
             return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '没有此类商品'})
         try:
-            count = int('count')
+            count = int(count)
         except Exception as e:
             count = 1
         user = request.user
@@ -57,23 +57,22 @@ class CartsView(View):
             response.set_cookie('carts', en, max_age=3600)
             return response
 
-
-
-    def get(self,request):
+    def get(self, request):
         user = request.user
         if user is not None and user.is_authenticated:
             redis_conn = get_redis_connection('carts')
-            sku_ids = redis_conn.hgetall('carts:%s'%user.id)
-            selected_ids = redis_conn.smembers('selected:%s'%user.id)
+            sku_ids = redis_conn.hgetall('carts:%s' % user.id)
+            selected_ids = redis_conn.smembers('selected:%s' % user.id)
             carts = {}
-            for sku_id,count in sku_ids.items():
-                selected = True
-            else:
-                selected = False
-            carts[sku_id]={
-                'count':count,
-                'selected':sku_id in selected_ids
-            }
+            for sku_id, count in sku_ids.items():
+                if sku_id in selected_ids:
+                    selected = True
+                else:
+                    selected = False
+                carts[sku_id] = {
+                    'count': count,
+                    'selected': sku_id in selected_ids
+                }
         else:
             carts_cookie = request.COOKIES.get('carts')
             if carts_cookie is not None:
@@ -84,7 +83,7 @@ class CartsView(View):
         ids = carts.keys()
         sku_list = []
         for id in ids:
-            sku = SKU.objects.get(pk = id)
+            sku = SKU.objects.get(pk=id)
             sku_list.append({
                 'id': sku.id,
                 'name': sku.name,
@@ -95,6 +94,64 @@ class CartsView(View):
                 'amount': str(sku.price * carts.get(sku.id).get('count')),
             })
         context = {
-            'cart_skus':sku_list
+            'cart_skus': sku_list
         }
-        return render(request,'cart.html',context=context)
+        return render(request, 'cart.html', context=context)
+
+    def put(self, request):
+        data = json.loads(request.body.decode())
+        sku_id = data.get('sku_id')
+        count = data.get('count')
+        selected = data.get('selected')
+        if not all([sku_id, count]):
+            return http.JsonResponse({'code': RETCODE.PARAMERR, 'errmsg': '参数错误'})
+        try:
+            sku = SKU.objects.get(pk=sku_id)
+        except SKU.DoesNotExist:
+            return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '没有此类商品'})
+        try:
+            count = int(count)
+        except Exception as e:
+            count = 1
+        user = request.user
+        if user is not None and user.is_authenticated:
+            redis_conn = get_redis_connection('carts')
+            redis_conn.hset('carts:%s' % user.id, sku_id, count)
+            if selected:
+                redis_conn.sadd('selected:%s' % user.id, sku_id)
+            else:
+                redis_conn.srem('selected:%s' % user.id, sku_id)
+            new_sku = {
+                'id': sku_id,
+                'count': count,
+                'selected': selected,
+                'name': sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': sku.price,
+                'amount': sku.price * count,
+            }
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'cart_sku': new_sku})
+        else:
+            carts_cookie = request.COOKIES.get('carts')
+            if carts_cookie is not None:
+                carts = pickle.loads(base64.b64decode(carts_cookie))
+            else:
+                carts = {}
+            if sku_id in carts:
+                carts[sku_id] = {
+                    'count': count,
+                    'selected': selected
+                }
+            en = base64.b64encode(pickle.dumps(carts))
+            new_sku = {
+                'id': sku_id,
+                'count': count,
+                'selected': selected,
+                'name': sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': sku.price,
+                'amount': sku.price * count,
+            }
+            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'cart_sku': new_sku})
+            response.set_cookie('carts', en, max_age=3600)
+            return response
