@@ -12,7 +12,7 @@ from apps.users.models import User, Address
 
 from django.urls import reverse
 from django.contrib.auth import login, logout
-
+from apps.carts.utils import merge_cookie_to_redis
 
 class RegisterView(View):
     def get(self, request):
@@ -79,6 +79,8 @@ class LoginView(View):
         else:
             responce = redirect(reverse('contents:index'))
         responce.set_cookie('username', user.username)
+
+        merge_cookie_to_redis(request,user,responce)
         return responce
 
 
