@@ -1,6 +1,6 @@
 import re
 from django.contrib.auth.backends import ModelBackend
-from apps.users.models import User
+from apps.users.models import User, Address
 
 
 def get_users_by_username(username):
@@ -39,3 +39,30 @@ def check_verify_token(token):
         return None
     user_id = result.get("user_id")
     return user_id
+
+
+def get_addresses(request):
+    login_user = request.user
+    addresses = Address.objects.filter(user=login_user, is_deleted=False)
+    address_dict_list = []
+    for address in addresses:
+        address_dict = {
+            "id": address.id,
+            "title": address.title,
+            "receiver": address.receiver,
+            "province": address.province.name,
+            "province_id": address.province_id,
+            "city": address.city.name,
+            "city_id": address.city_id,
+            "district": address.district.name,
+            "district_id": address.district_id,
+            "place": address.place,
+            "mobile": address.mobile,
+            "tel": address.tel,
+            "email": address.email}
+        address_dict_list.append(address_dict)
+    context = {
+        'default_address_id': login_user.default_address_id,
+        'addresses': address_dict_list,
+    }
+    return context

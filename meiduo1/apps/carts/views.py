@@ -36,7 +36,7 @@ class CartsView(View):
             pipeline = redis_conn.pipeline()
             # redis_conn.hset('carts:%s' % user.id, sku_id, count)
             # redis_conn.hincrby('carts:%s' % user.id, sku_id, count) #增加count个数
-            pipeline.hhincrby('carts:%s' % user.id, sku_id, count)
+            pipeline.hincrby('carts:%s' % user.id, sku_id, count)
             # redis_conn.sadd('selected:', sku_id)
             pipeline.sadd('selected:', sku_id)
             pipeline.execute()  # pipeline 操作数据库

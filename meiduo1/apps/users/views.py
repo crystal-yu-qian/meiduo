@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.contrib.auth import login, logout
 from apps.carts.utils import merge_cookie_to_redis
 
+
 class RegisterView(View):
     def get(self, request):
         return render(request, 'register.html')
@@ -80,7 +81,7 @@ class LoginView(View):
             responce = redirect(reverse('contents:index'))
         responce.set_cookie('username', user.username)
 
-        merge_cookie_to_redis(request,user,responce)
+        merge_cookie_to_redis(request, user, responce)
         return responce
 
 
@@ -140,7 +141,7 @@ class EmailView(View):
 
 # celery -A celery_tasks.main worker -l info
 
-from apps.users.utils import check_verify_token
+from apps.users.utils import check_verify_token, get_addresses
 
 
 class EmailActiveView(View):
@@ -163,6 +164,12 @@ class EmailActiveView(View):
 import logging
 
 logger = logging.getLogger('django')
+
+
+class AddressView(View):
+    def get(self, request):
+        context = get_addresses(request)
+        return render(request, 'user_center_site.html', context)
 
 
 class CreateAddressViw(View):
@@ -357,4 +364,4 @@ class HistoryView(LoginRequiredMixin, View):
                 'default_image_url': sku.default_image.url,
                 'price': sku.price,
             })
-        return http.JsonResponse({'code': RETCODE.OK, 'erromsg': 'ok','skus':skus})
+        return http.JsonResponse({'code': RETCODE.OK, 'erromsg': 'ok', 'skus': skus})
