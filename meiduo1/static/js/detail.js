@@ -133,7 +133,7 @@ var vm = new Vue({
         detail_visit(){
             if (this.category_id) {
                 var url = this.hots + '/detail/visit/';
-                axios.post(url, {'category_id':this.category_id }, {
+                axios.post(url, {'category_id': this.category_id}, {
                     headers: {
                         'X-CSRFToken': getCookie('csrftoken')
                     },
@@ -174,14 +174,14 @@ var vm = new Vue({
         },
         // 获取购物车数据
         get_carts(){
-            var url = this.host + '/carts/simple/';
+            let url = '/carts/simple/';
             axios.get(url, {
                 responseType: 'json',
             })
                 .then(response => {
                     this.carts = response.data.cart_skus;
                     this.cart_total_count = 0;
-                    for (var i = 0; i < this.carts.length; i++) {
+                    for (let i = 0; i < this.carts.length; i++) {
                         if (this.carts[i].name.length > 25) {
                             this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
                         }

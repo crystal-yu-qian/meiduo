@@ -57,14 +57,14 @@
             </ul>
         </div>
 
-        <div class="guest_cart fr">
-            <a href="/carts/" class="cart_name fl">我的购物车</a>
+        <div @mouseenter="get_carts" class="guest_cart fr" v-cloak>
+            <a href="{{ url('carts:carts_simple') }}" class="cart_name fl">我的购物车</a>
             <div class="goods_count fl" id="show_count">[[ cart_total_count ]]</div>
             <ul class="cart_goods_show">
-                <li v-for="cart in carts">
-                    <img :src="cart.default_image_url" alt="商品图片">
-                    <h4>[[ cart.name ]]</h4>
-                    <div>[[ cart.count ]]</div>
+                <li v-for="sku in carts">
+                    <img :src="sku.default_image_url" alt="商品图片">
+                    <h4>[[ sku.name ]]</h4>
+                    <div>[[ sku.count ]]</div>
                 </li>
             </ul>
         </div>

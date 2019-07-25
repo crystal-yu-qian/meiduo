@@ -7,7 +7,7 @@ var vm = new Vue({
         cart_total_count: 0, // 购物车总数量
         carts: [], // 购物车数据,
         hots: [],
-        category_id:category_id,
+        category_id: category_id,
         username: '',
     },
     mounted(){
@@ -22,14 +22,14 @@ var vm = new Vue({
     methods: {
         // 获取购物车数据
         get_carts(){
-            var url = this.host + '/carts/simple/';
+            let url = '/carts/simple/';
             axios.get(url, {
                 responseType: 'json',
             })
                 .then(response => {
                     this.carts = response.data.cart_skus;
                     this.cart_total_count = 0;
-                    for (var i = 0; i < this.carts.length; i++) {
+                    for (let i = 0; i < this.carts.length; i++) {
                         if (this.carts[i].name.length > 25) {
                             this.carts[i].name = this.carts[i].name.substring(0, 25) + '...';
                         }
