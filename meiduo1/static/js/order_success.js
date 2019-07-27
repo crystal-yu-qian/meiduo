@@ -3,6 +3,8 @@ var vm = new Vue({
 	// 修改Vue变量的读取语法，避免和django模板语法冲突
     delimiters: ['[[', ']]'],
     data: {
+        username: '',
+        carts: [],
     },
     mounted(){
     },

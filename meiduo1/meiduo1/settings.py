@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'apps.contents',
     'apps.goods',
     'haystack',
-    'apps.orders'
+    'apps.orders',
+    'apps.pay',
 ]
 
 MIDDLEWARE = [
@@ -254,3 +255,11 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
+
+
+ALIPAY_APPID = '2016101100657425'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/keys/app_private_key.pem')
+ALIPAY_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/pay/keys/alipay_public_key.pem')

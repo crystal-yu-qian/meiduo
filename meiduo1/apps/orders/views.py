@@ -63,7 +63,7 @@ class OrderCommitView(LoginRequiredMixin, View):
             pass
         user = request.user
         try:
-            address = Address.objects.get(pk =address_id)
+            address = Address.objects.get(pk=address_id)
         except Address.DoesNotExist:
             pass
         from django.utils import timezone
@@ -126,17 +126,20 @@ class OrderCommitView(LoginRequiredMixin, View):
             order.total_amount += (count * sku.price)
         order.save()
         transaction.savepoint_commit(save_point)
-        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok','order_id':order.order_id,'payment_amount':order.total_amount})
+        redis_conn.hdel('carts:%s' % user.id, *selected_ids)
+        redis_conn.srem('selected:%s' % user.id, *selected_ids)
+        return http.JsonResponse(
+            {'code': RETCODE.OK, 'errmsg': 'ok', 'order_id': order.order_id, 'payment_amount': order.total_amount})
 
 
 class OrderSuccessView(View):
-    def get(self,request):
+    def get(self, request):
         order_id = request.GET.get('order_id')
         payment_amount = request.GET.get('payment_amount')
         pay_method = request.GET.get('pay_method')
-        context ={
-            'order_id':order_id,
-            'payment_amount':payment_amount,
+        context = {
+            'order_id': order_id,
+            'payment_amount': payment_amount,
             'pay_method': pay_method
         }
-        return render(request,'order_success.html',context=context)
+        return render(request, 'order_success.html', context=context)
