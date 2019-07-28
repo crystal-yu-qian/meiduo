@@ -365,3 +365,106 @@ class HistoryView(LoginRequiredMixin, View):
                 'price': sku.price,
             })
         return http.JsonResponse({'code': RETCODE.OK, 'erromsg': 'ok', 'skus': skus})
+
+
+class FindPasswordView(View):
+    def get(self, request):
+        return render(request, 'find_password.html')
+
+
+from apps.users.utils import get_users_by_username
+from meiduo1 import settings
+
+
+class PasswordImgView(View):
+    def get(self, request, username):
+        img_code = request.GET.get("text")
+        uuid = request.GET.get('image_code_id')
+        if not all([img_code, uuid]):
+            return http.JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少必须的参数'})
+        coon = get_redis_connection('code')
+        redis_code = coon.get('img:%s' % uuid)
+        if redis_code is None:
+            return http.JsonResponse({'code': RETCODE.NODATAERR, 'errmsg': '验证码过期'})
+        if redis_code.decode().lower() != img_code.lower():
+            return http.JsonResponse({'code': RETCODE.IMAGECODEERR, 'errmsg': '验证码不一致'})
+        coon.delete('img:%s' % uuid)
+        user = get_users_by_username(username)
+        if user is None:
+            return http.JsonResponse({'code': RETCODE.USERERR, 'errmsg': '用户错误'})
+        from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+        s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+        access_token = s.dumps(user.id)
+        return http.JsonResponse(
+            {'code': RETCODE.OK, 'errmsg': 'ok', 'mobile': user.mobile, 'access_token': access_token.decode()})
+
+
+class PasswordSmsView(View):
+    def get(self, request):
+        access_token = request.GET.get('access_token')
+        from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+        s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+        user_id = s.loads(access_token)
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return http.JsonResponse({'code': RETCODE.USERERR, 'errmsg': '用户错误'}, status=400)
+        coon = get_redis_connection('code')
+        mobile = user.mobile
+        send_flag = coon.get('send_flag:%s' % mobile)
+        if send_flag:
+            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': "操作过于频繁"})
+        from random import randint
+        sms_code = '%06d' % randint(0, 999999)
+        pl = coon.pipeline()
+        pl.setex('sms:%s' % mobile, 300, sms_code)
+        pl.setex('send_flag:%s' % mobile, 60, 1)
+        pl.execute()
+        from celery_tasks.sms.tasks import send_sms_code
+        send_sms_code.delay(mobile, sms_code)
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
+
+
+class PasswordCheckSmsView(View):
+    def get(self, request, username):
+        sms_code = request.GET.get('sms_code')
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return http.JsonResponse({'code': RETCODE.USERERR, 'errmsg': '用户错误'}, status=400)
+        redis_conn = get_redis_connection('code')
+        sms_code_server = redis_conn.get('sms:%s' % user.mobile)
+        if sms_code_server is None:
+            return http.JsonResponse({'code': RETCODE.NODATAERR,'errmsg':'无效的短信验证码'})
+        if sms_code != sms_code_server.decode():
+            return http.JsonResponse({'code': RETCODE.SMSCODERR,'errmsg': '输入短信验证码有误'})
+        from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+        s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+        access_token = s.dumps(user.id)
+        return http.JsonResponse(
+            {'code': RETCODE.OK, 'errmsg': 'ok', 'user_id': user.id, 'access_token': access_token.decode()})
+
+
+class PasswordChangeView(View):
+    def post(self, request,user_id):
+        data = json.loads(request.body.decode())
+        password = data.get('password')
+        password2 = data.get('password2')
+        access_token = data.get('access_token')
+        if not all([password, password2,access_token]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.HttpResponseBadRequest('密码最少8位，最长20位')
+        if password != password2:
+            return http.HttpResponseBadRequest('两次输入的密码不一致')
+        from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+        s = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
+        if int(user_id) != s.loads(access_token):
+            return http.JsonResponse({'code':RETCODE.USERERR,'errmsg':'用户错误'}, status=400)
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return http.JsonResponse({'code': RETCODE.USERERR, 'errmsg': '用户错误'}, status=400)
+        user.set_password(password)
+        user.save()
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
