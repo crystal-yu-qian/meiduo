@@ -1,5 +1,6 @@
 from django import http
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator, EmptyPage
 from django.shortcuts import render
 
 # Create your views here.
@@ -143,3 +144,38 @@ class OrderSuccessView(View):
             'pay_method': pay_method
         }
         return render(request, 'order_success.html', context=context)
+
+class MyOrderView(LoginRequiredMixin, View):
+    login_url = '/login/'
+
+    def get(self, request):
+        user = request.user
+        page_num = request.GET.get('page_num')
+        orders = user.orderinfo_set.all().order_by("-create_time")
+        for order in orders:
+            order_goods = order.skus.all()
+            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status - 1][1]
+            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method - 1][1]
+            order.sku_list = []
+            for good in order_goods:
+                sku = good.sku
+                sku.amount = good.price * good.count
+                sku.count = good.count
+                order.sku_list.append(sku)
+        try:
+            page_num = int(page_num)
+        except:
+            return http.HttpResponseBadRequest('参数错误')
+        try:
+            paginator = Paginator(orders, 2)
+            page_orders = paginator.page(page_num)
+            total_page = paginator.num_pages
+        except EmptyPage:
+            return http.HttpResponseNotFound('订单不存在')
+        #
+        context = {
+            "page_orders": page_orders,
+            'total_page': total_page,
+            'page_num': page_num,
+        }
+        return render(request, 'user_center_order.html', context = context)
